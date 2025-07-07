@@ -91,6 +91,22 @@ except ImportError as e:
       run: |
         echo "Testing main application modules..."
         python test_imports.py
+        echo "Testing Windows-specific imports..."
+        python -c "
+import sys
+import os
+sys.path.insert(0, os.getcwd())
+print('Testing Windows modules that should work in GitHub Actions...')
+try:
+    import win32clipboard
+    import win32con
+    import tkinter
+    import pystray
+    print('✅ All critical Windows modules imported successfully')
+except ImportError as e:
+    print(f'❌ Critical module import failed: {e}')
+    sys.exit(1)
+"
         
     - name: Build executable with PyInstaller
       run: |
@@ -100,7 +116,7 @@ except ImportError as e:
         echo "Checking spec file..."
         type clipboard_manager.spec
         echo "Starting PyInstaller build with spec file..."
-        pyinstaller --clean --noconfirm --debug=all clipboard_manager.spec
+        pyinstaller --clean --noconfirm clipboard_manager.spec
         echo "Build completed, checking output..."
         dir dist\
         if (Test-Path "dist/ClipboardManager.exe") {
