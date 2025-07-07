@@ -9,17 +9,17 @@
 ✅ **打包配置已完成**  
 ⚠️ **需要在Windows环境中执行最后一步**
 
-## 🚀 推荐方案：安装Python并打包
+## 🚀 推荐方案：GitHub Actions自动构建
 
-### 步骤1: 安装Python（5分钟）
-1. 双击 `quick_install_python.bat`
-2. 按提示访问 Python 官网并下载
-3. 安装时**务必勾选 "Add Python to PATH"**
+### 步骤1: 上传到GitHub（2分钟）
+1. 创建GitHub仓库
+2. 上传所有项目文件到仓库
+3. GitHub自动检测并开始构建
 
-### 步骤2: 一键打包（2分钟）
-1. 双击 `build_windows.bat`
-2. 等待自动安装依赖和打包
-3. 完成后在 `dist/` 文件夹获取exe文件
+### 步骤2: 等待自动构建（3-5分钟）
+1. 查看Actions页面的构建进度
+2. 构建完成后显示绿色勾号
+3. 在Artifacts中下载构建产物
 
 ## 📦 您将获得的文件
 
@@ -44,16 +44,14 @@
 
 ## 🔄 备选方案
 
-如果不想安装Python：
+### 方案A: 下载预编译版本
+1. 查看项目的GitHub Releases页面
+2. 下载最新发布的exe文件
+3. 直接运行使用
 
-### 方案A: GitHub在线构建
-1. 将项目上传到GitHub
-2. 系统自动构建exe文件
-3. 下载打包好的程序
-
-### 方案B: 请朋友代为打包
-1. 将项目文件发给有Python环境的朋友
-2. 运行 `build_windows.bat`
+### 方案B: 手动构建（开发者）
+1. 安装Python环境
+2. 运行 `python build.py`
 3. 获取生成的exe文件
 
 ## 📞 技术支持
@@ -78,11 +76,11 @@
 ## 🎯 快速开始
 
 **最简单的方法**：
-1. `quick_install_python.bat` → 安装Python
-2. `build_windows.bat` → 打包exe
-3. `dist/ClipboardManager.exe` → 开始使用
+1. 上传代码到GitHub → 自动构建
+2. 下载构建产物 → 获取exe文件
+3. 运行exe → 开始使用
 
-**预计耗时**: 10分钟（包括下载安装Python）
+**预计耗时**: 5分钟（无需本地环境）
 
 ---
 

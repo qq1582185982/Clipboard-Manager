@@ -1,0 +1,147 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Create application icon
+      run: |
+        python -c "
+        from PIL import Image, ImageDraw
+        import os
+        
+        print('Creating application icon...')
+        os.makedirs('assets', exist_ok=True)
+        
+        # Create icon
+        size = (64, 64)
+        image = Image.new('RGBA', size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(image)
+        
+        # Draw clipboard icon
+        draw.rectangle([8, 6, 56, 58], outline='black', fill='white', width=2)
+        draw.rectangle([20, 2, 44, 10], outline='black', fill='silver', width=1)
+        draw.rectangle([22, 4, 42, 8], outline='black', fill='white', width=1)
+        draw.line([14, 18, 50, 18], fill='black', width=2)
+        draw.line([14, 26, 47, 26], fill='black', width=2)
+        draw.line([14, 34, 44, 34], fill='black', width=2)
+        draw.line([14, 42, 40, 42], fill='black', width=2)
+        
+        # Save as ICO format
+        image.save('assets/icon.ico', format='ICO', sizes=[(64, 64), (32, 32), (16, 16)])
+        print('✅ Icon created successfully: assets/icon.ico')
+        "
+        
+    - name: Build executable with PyInstaller
+      run: |
+        echo "Building executable..."
+        pyinstaller --clean --noconfirm clipboard_manager.spec
+        
+    - name: Create portable package
+      run: |
+        python build.py
+        
+    - name: Get version
+      id: version
+      run: |
+        if ($env:GITHUB_REF -match "refs/tags/(.*)") {
+          $VERSION = $matches[1]
+        } else {
+          $VERSION = "dev-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        }
+        echo "VERSION=$VERSION" >> $env:GITHUB_OUTPUT
+        echo "Version: $VERSION"
+        
+    - name: Rename files with version
+      run: |
+        $VERSION = "${{ steps.version.outputs.VERSION }}"
+        if (Test-Path "dist/ClipboardManager.exe") {
+          Copy-Item "dist/ClipboardManager.exe" "dist/ClipboardManager-$VERSION.exe"
+        }
+        if (Test-Path "dist/ClipboardManager_v1.0_Portable.zip") {
+          Copy-Item "dist/ClipboardManager_v1.0_Portable.zip" "dist/ClipboardManager-$VERSION-Portable.zip"
+        }
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: clipboard-manager-windows-${{ steps.version.outputs.VERSION }}
+        path: |
+          dist/ClipboardManager*.exe
+          dist/ClipboardManager*.zip
+          README.md
+        retention-days: 30
+        
+    - name: Create Release (for tags)
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/ClipboardManager-${{ steps.version.outputs.VERSION }}.exe
+          dist/ClipboardManager-${{ steps.version.outputs.VERSION }}-Portable.zip
+        body: |
+          ## 剪贴板管理器 ${{ steps.version.outputs.VERSION }}
+          
+          ### 📦 下载说明
+          
+          - **ClipboardManager-${{ steps.version.outputs.VERSION }}.exe** - 主程序，双击即可运行
+          - **ClipboardManager-${{ steps.version.outputs.VERSION }}-Portable.zip** - 便携版，包含说明文档
+          
+          ### ✨ 功能特性
+          
+          - 🎯 实时监听剪贴板变化
+          - 📚 历史记录持久化存储  
+          - 🔍 智能搜索和过滤
+          - ⭐ 收藏重要内容
+          - 🔔 系统托盘集成
+          - 📊 数据管理和导出
+          
+          ### 🚀 使用方法
+          
+          1. 下载 `.exe` 文件
+          2. 双击运行（首次运行会创建配置文件）
+          3. 开始使用剪贴板管理功能
+          
+          ### ⚙️ 系统要求
+          
+          - Windows 7/8/10/11
+          - 约50MB内存
+          - 约50MB磁盘空间
+          
+          ---
+          
+          *自动构建于 GitHub Actions*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

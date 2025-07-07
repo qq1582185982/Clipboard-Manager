@@ -21,14 +21,21 @@
 
 ## 🚀 快速开始
 
-### 方法1: 直接运行（推荐）
+### 方法1: 下载预编译版本（推荐）
 
-1. 确保已安装 Python 3.7+
-2. 双击运行 `run_app.py`
-3. 程序会自动检查并安装依赖
-4. 启动完成后即可使用
+1. 访问项目的 [GitHub Releases](../../releases) 页面
+2. 下载最新版本的 `ClipboardManager-v*.exe`
+3. 双击运行，无需安装任何依赖
+4. 首次运行会自动创建配置文件
 
-### 方法2: 手动安装
+### 方法2: GitHub Actions自动构建
+
+1. Fork或上传代码到GitHub仓库
+2. GitHub会自动构建Windows exe文件
+3. 在Actions页面下载构建产物
+4. 详见 [GitHub Actions构建指南](GITHUB_ACTIONS_GUIDE.md)
+
+### 方法3: 源码运行（开发者）
 
 1. **安装依赖**
    ```bash
