@@ -32,7 +32,32 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        echo "Installing requirements..."
         pip install -r requirements.txt
+        echo "Verifying installations..."
+        python -c "import pywin32; print('✅ pywin32 installed')" || echo "❌ pywin32 failed"
+        python -c "import PIL; print('✅ Pillow installed')" || echo "❌ Pillow failed"  
+        python -c "import pystray; print('✅ pystray installed')" || echo "❌ pystray failed"
+        python -c "import PyInstaller; print('✅ PyInstaller installed')" || echo "❌ PyInstaller failed"
+        echo "Testing module imports..."
+        python -c "
+import sys
+try:
+    import win32clipboard
+    print('✅ win32clipboard OK')
+except ImportError as e:
+    print(f'❌ win32clipboard: {e}')
+try:
+    import tkinter
+    print('✅ tkinter OK')
+except ImportError as e:
+    print(f'❌ tkinter: {e}')
+try:
+    import sqlite3
+    print('✅ sqlite3 OK')
+except ImportError as e:
+    print(f'❌ sqlite3: {e}')
+"
         
     - name: Create application icon
       run: |
@@ -62,14 +87,44 @@ jobs:
         print('✅ Icon created successfully: assets/icon.ico')
         "
         
+    - name: Test module imports
+      run: |
+        echo "Testing main application modules..."
+        python test_imports.py
+        
     - name: Build executable with PyInstaller
       run: |
         echo "Building executable..."
-        pyinstaller --clean --noconfirm clipboard_manager.spec
+        echo "Available files:"
+        dir
+        echo "Checking spec file..."
+        type clipboard_manager.spec
+        echo "Starting PyInstaller build with spec file..."
+        pyinstaller --clean --noconfirm --debug=all clipboard_manager.spec
+        echo "Build completed, checking output..."
+        dir dist\
+        if (Test-Path "dist/ClipboardManager.exe") {
+          echo "✅ ClipboardManager.exe created successfully"
+          $size = (Get-Item "dist/ClipboardManager.exe").Length / 1MB
+          echo "File size: $([math]::Round($size, 2)) MB"
+        } else {
+          echo "❌ ClipboardManager.exe not found"
+          echo "Available files in dist:"
+          dir dist\ -Recurse
+          exit 1
+        }
         
     - name: Create portable package
       run: |
-        python build.py
+        echo "Creating portable package..."
+        mkdir ClipboardManager_Portable
+        copy dist\ClipboardManager.exe ClipboardManager_Portable\
+        copy README.md ClipboardManager_Portable\
+        echo @echo off > ClipboardManager_Portable\start.bat
+        echo echo Starting Clipboard Manager... >> ClipboardManager_Portable\start.bat
+        echo ClipboardManager.exe >> ClipboardManager_Portable\start.bat
+        echo pause >> ClipboardManager_Portable\start.bat
+        powershell Compress-Archive -Path ClipboardManager_Portable\* -DestinationPath dist\ClipboardManager_Portable.zip
         
     - name: Get version
       id: version
@@ -85,12 +140,17 @@ jobs:
     - name: Rename files with version
       run: |
         $VERSION = "${{ steps.version.outputs.VERSION }}"
+        echo "Using version: $VERSION"
         if (Test-Path "dist/ClipboardManager.exe") {
           Copy-Item "dist/ClipboardManager.exe" "dist/ClipboardManager-$VERSION.exe"
+          echo "Created ClipboardManager-$VERSION.exe"
         }
-        if (Test-Path "dist/ClipboardManager_v1.0_Portable.zip") {
-          Copy-Item "dist/ClipboardManager_v1.0_Portable.zip" "dist/ClipboardManager-$VERSION-Portable.zip"
+        if (Test-Path "dist/ClipboardManager_Portable.zip") {
+          Copy-Item "dist/ClipboardManager_Portable.zip" "dist/ClipboardManager-$VERSION-Portable.zip"
+          echo "Created ClipboardManager-$VERSION-Portable.zip"
         }
+        echo "Final dist contents:"
+        dir dist\
         
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
