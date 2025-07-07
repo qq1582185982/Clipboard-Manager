@@ -12,6 +12,10 @@ jobs:
   build-windows:
     runs-on: windows-latest
     
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: 1
+      
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -34,15 +38,8 @@ jobs:
         python -m pip install --upgrade pip
         echo "Installing requirements..."
         pip install -r requirements.txt
-        echo "Verifying installations..."
-        python -c "import win32clipboard; print('✅ pywin32 installed')" || echo "❌ pywin32 failed"
-        python -c "import PIL; print('✅ Pillow installed')" || echo "❌ Pillow failed"  
-        python -c "import pystray; print('✅ pystray installed')" || echo "❌ pystray failed"
-        python -c "import PyInstaller; print('✅ PyInstaller installed')" || echo "❌ PyInstaller failed"
-        echo "Testing critical module imports..."
-        python -c "import win32clipboard; print('✅ win32clipboard')" || echo "❌ win32clipboard failed"
-        python -c "import tkinter; print('✅ tkinter')" || echo "❌ tkinter failed"
-        python -c "import sqlite3; print('✅ sqlite3')" || echo "❌ sqlite3 failed"
+        echo "Verifying critical imports..."
+        python -c "import win32clipboard, PIL, pystray, PyInstaller, tkinter, sqlite3; print('All modules imported successfully')"
         
     - name: Create application icon
       run: |
@@ -53,8 +50,8 @@ jobs:
       run: |
         echo "Testing main application modules..."
         python test_imports.py
-        echo "Testing Windows-specific imports..."
-        python -c "import sys, os; sys.path.insert(0, os.getcwd()); print('Testing critical modules...'); import win32clipboard, win32con, tkinter, pystray; print('✅ All critical Windows modules imported successfully')"
+        echo "Testing Windows-specific modules..."
+        python -c "import win32clipboard, win32con, tkinter, pystray; print('All critical Windows modules imported successfully')"
         
     - name: Build executable with PyInstaller
       run: |
@@ -68,11 +65,11 @@ jobs:
         echo "Build completed, checking output..."
         dir dist\
         if (Test-Path "dist/ClipboardManager.exe") {
-          echo "✅ ClipboardManager.exe created successfully"
+          echo "ClipboardManager.exe created successfully"
           $size = (Get-Item "dist/ClipboardManager.exe").Length / 1MB
           echo "File size: $([math]::Round($size, 2)) MB"
         } else {
-          echo "❌ ClipboardManager.exe not found"
+          echo "ERROR: ClipboardManager.exe not found"
           echo "Available files in dist:"
           dir dist\ -Recurse
           exit 1
@@ -136,27 +133,27 @@ jobs:
         body: |
           ## 剪贴板管理器 ${{ steps.version.outputs.VERSION }}
           
-          ### 📦 下载说明
+          ### 下载说明
           
           - **ClipboardManager-${{ steps.version.outputs.VERSION }}.exe** - 主程序，双击即可运行
           - **ClipboardManager-${{ steps.version.outputs.VERSION }}-Portable.zip** - 便携版，包含说明文档
           
-          ### ✨ 功能特性
+          ### 功能特性
           
-          - 🎯 实时监听剪贴板变化
-          - 📚 历史记录持久化存储  
-          - 🔍 智能搜索和过滤
-          - ⭐ 收藏重要内容
-          - 🔔 系统托盘集成
-          - 📊 数据管理和导出
+          - 实时监听剪贴板变化
+          - 历史记录持久化存储  
+          - 智能搜索和过滤
+          - 收藏重要内容
+          - 系统托盘集成
+          - 数据管理和导出
           
-          ### 🚀 使用方法
+          ### 使用方法
           
           1. 下载 `.exe` 文件
           2. 双击运行（首次运行会创建配置文件）
           3. 开始使用剪贴板管理功能
           
-          ### ⚙️ 系统要求
+          ### 系统要求
           
           - Windows 7/8/10/11
           - 约50MB内存

@@ -38,7 +38,7 @@ def create_icon():
     icon_path = 'assets/icon.ico'
     image.save(icon_path, format='ICO', sizes=[(64, 64), (32, 32), (16, 16)])
     
-    print(f'✅ Icon created successfully: {icon_path}')
+    print(f'Icon created successfully: {icon_path}')
     return True
 
 if __name__ == "__main__":
