@@ -39,74 +39,22 @@ jobs:
         python -c "import PIL; print('✅ Pillow installed')" || echo "❌ Pillow failed"  
         python -c "import pystray; print('✅ pystray installed')" || echo "❌ pystray failed"
         python -c "import PyInstaller; print('✅ PyInstaller installed')" || echo "❌ PyInstaller failed"
-        echo "Testing module imports..."
-        python -c "
-import sys
-try:
-    import win32clipboard
-    print('✅ win32clipboard OK')
-except ImportError as e:
-    print(f'❌ win32clipboard: {e}')
-try:
-    import tkinter
-    print('✅ tkinter OK')
-except ImportError as e:
-    print(f'❌ tkinter: {e}')
-try:
-    import sqlite3
-    print('✅ sqlite3 OK')
-except ImportError as e:
-    print(f'❌ sqlite3: {e}')
-"
+        echo "Testing critical module imports..."
+        python -c "import win32clipboard; print('✅ win32clipboard')" || echo "❌ win32clipboard failed"
+        python -c "import tkinter; print('✅ tkinter')" || echo "❌ tkinter failed"
+        python -c "import sqlite3; print('✅ sqlite3')" || echo "❌ sqlite3 failed"
         
     - name: Create application icon
       run: |
-        python -c "
-        from PIL import Image, ImageDraw
-        import os
-        
-        print('Creating application icon...')
-        os.makedirs('assets', exist_ok=True)
-        
-        # Create icon
-        size = (64, 64)
-        image = Image.new('RGBA', size, (0, 0, 0, 0))
-        draw = ImageDraw.Draw(image)
-        
-        # Draw clipboard icon
-        draw.rectangle([8, 6, 56, 58], outline='black', fill='white', width=2)
-        draw.rectangle([20, 2, 44, 10], outline='black', fill='silver', width=1)
-        draw.rectangle([22, 4, 42, 8], outline='black', fill='white', width=1)
-        draw.line([14, 18, 50, 18], fill='black', width=2)
-        draw.line([14, 26, 47, 26], fill='black', width=2)
-        draw.line([14, 34, 44, 34], fill='black', width=2)
-        draw.line([14, 42, 40, 42], fill='black', width=2)
-        
-        # Save as ICO format
-        image.save('assets/icon.ico', format='ICO', sizes=[(64, 64), (32, 32), (16, 16)])
-        print('✅ Icon created successfully: assets/icon.ico')
-        "
+        echo "Creating application icon..."
+        python create_icon.py
         
     - name: Test module imports
       run: |
         echo "Testing main application modules..."
         python test_imports.py
         echo "Testing Windows-specific imports..."
-        python -c "
-import sys
-import os
-sys.path.insert(0, os.getcwd())
-print('Testing Windows modules that should work in GitHub Actions...')
-try:
-    import win32clipboard
-    import win32con
-    import tkinter
-    import pystray
-    print('✅ All critical Windows modules imported successfully')
-except ImportError as e:
-    print(f'❌ Critical module import failed: {e}')
-    sys.exit(1)
-"
+        python -c "import sys, os; sys.path.insert(0, os.getcwd()); print('Testing critical modules...'); import win32clipboard, win32con, tkinter, pystray; print('✅ All critical Windows modules imported successfully')"
         
     - name: Build executable with PyInstaller
       run: |
